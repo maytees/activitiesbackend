@@ -3,7 +3,7 @@ import { promises as fs } from 'fs';
 const cookieParser = require('cookie-parser');
 
 const app = express();
-const port = 3000;
+const port = 7070;
 const dataFilePath = './data.json';
 
 type Person = {
@@ -71,10 +71,14 @@ async function main() {
       // Add 1 to the uuid in data file
       data.uuid++;
       await writeJsonFile(dataFilePath, data);
+
+      res.send('Welcome to the site! Your UUID is: ' + (data.uuid - 1));
     }
 
     data.visits++;
     await writeJsonFile(dataFilePath, data);
+
+    res.send(`Number of visits: ${data.visits}`);
   });
 
   // Login check
