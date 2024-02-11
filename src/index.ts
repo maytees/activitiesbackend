@@ -65,17 +65,23 @@ async function main() {
 
   app.get('/', async (req: Request, res: Response) => {
     const data = await readJsonFile<Data>(dataFilePath);
+
     const uuid = parseInt(req.cookies.uuid);    
+
+    data.visits++;
+    await writeJsonFile(dataFilePath, data);
+    
     if(!uuid) {
       res.cookie('uuid', (data.uuid + 1).toString());
       // Add 1 to the uuid in data file
       data.uuid++;
-      data.visits++;
       await writeJsonFile(dataFilePath, data);
 
-      res.send('Welcome to the site! Your UUID is: ' + (data.uuid - 1) + "\nVisits: " + data.visits);
+      res.send('Welcome to the site! Your UUID is: ' + (data.uuid) + "\nVisits: " + data.visits);
+      return;
     }
 
+    res.send("Welcome back! Your UUID is: " + uuid + "\nVisits: " + data.visits);
   });
 
   // Login check
