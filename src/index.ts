@@ -70,15 +70,12 @@ async function main() {
       res.cookie('uuid', (data.uuid + 1).toString());
       // Add 1 to the uuid in data file
       data.uuid++;
+      data.visits++;
       await writeJsonFile(dataFilePath, data);
 
-      res.send('Welcome to the site! Your UUID is: ' + (data.uuid - 1));
+      res.send('Welcome to the site! Your UUID is: ' + (data.uuid - 1) + "\nVisits: " + data.visits);
     }
 
-    data.visits++;
-    await writeJsonFile(dataFilePath, data);
-
-    res.send(`Number of visits: ${data.visits}`);
   });
 
   // Login check
