@@ -155,6 +155,12 @@ async function main() {
     res.status(500).send('Something went wrong');
   });
 
+  process.on('SIGINT', function() {
+    console.log( "\nGracefully shutting down from SIGINT (Ctrl-C)" );
+    // some other closing procedures go here
+    process.exit(0);
+  });
+
   console.log('Server is starting...');
 }
 
