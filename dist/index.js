@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const fs_1 = require("fs");
+const cors = require("cors");
 const cookieParser = require('cookie-parser');
 const app = (0, express_1.default)();
 const port = 7070;
@@ -37,8 +38,12 @@ async function checkLogin(name, passphrase, uuid) {
         return true;
     }
     // Flag the user if the passphrase is correct but the browser is not in the list
-    if (person.passphrase === passphrase) {
-        person.browsers.push(uuid.toString());
+    if (person.passphrase === passphrase && !person.browsers.includes(uuid.toString())) {
+        person.timesFlagged++;
+        if (!person.isFlagged) {
+            person.isFlagged = true;
+            data.flags.push(person);
+        }
         await writeJsonFile(dataFilePath, data);
         return false;
     }
@@ -47,14 +52,21 @@ async function checkLogin(name, passphrase, uuid) {
 }
 async function main() {
     app.use(express_1.default.json());
-    app.use(cookieParser());
+    app.use(cookieParser({
+        withCredentials: true
+    }));
+    app.use(cors({
+        origin: 'http://127.0.0.1:8443',
+        credentials: true,
+    }));
     app.get('/', async (req, res) => {
         const data = await readJsonFile(dataFilePath);
         const uuid = parseInt(req.cookies.uuid);
         data.visits++;
         await writeJsonFile(dataFilePath, data);
         if (!uuid) {
-            res.cookie('uuid', (data.uuid + 1).toString());
+            const oneYearInMs = 365 * 24 * 60 * 60 * 1000; // Milliseconds in a year
+            res.cookie('uuid', (data.uuid + 1).toString(), { maxAge: oneYearInMs, expires: new Date(Date.now() + oneYearInMs), httpOnly: true, sameSite: 'none', secure: true, path: '/' });
             // Add 1 to the uuid in data file
             data.uuid++;
             await writeJsonFile(dataFilePath, data);
@@ -66,14 +78,18 @@ async function main() {
     // Login check
     app.get('/check', (req, res) => {
         const name = req.query.name;
-        const passphrase = req.query.passphrase;
+        const passphrase = req.query.pass;
         const uuid = parseInt(req.cookies.uuid);
+        console.log(uuid);
+        console.log(passphrase);
+        console.log(name);
         if (!name || !uuid || !passphrase) {
-            res.status(400).send('Invalid input');
+            res.status(400).send('Invalid input: ' + name + " " + uuid + " " + passphrase);
             return;
         }
         checkLogin(name, passphrase, uuid).then((result) => {
-            res.json(result);
+            console.log(result);
+            res.send({ result });
         });
     });
     // This gest the people from the data file
