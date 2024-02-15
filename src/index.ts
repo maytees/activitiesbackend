@@ -123,6 +123,30 @@ async function main() {
     });
   });
 
+  app.get('/checkuuid', (req: Request, res: Response) => {
+    const uuid = parseInt(req.query.uuid as string);
+
+    if (!uuid) {
+      res.status(400).send('Invalid input');
+      return;
+    }
+
+    const check = async () => {
+      const data = await readJsonFile<Data>(dataFilePath);
+      const person = data.people.find((person) => person.browsers.includes(uuid.toString()));
+
+      if(person){
+        return true;
+      }
+      return false;
+    };
+
+    check().then((result) => {
+      console.log(result);
+      res.send({result});
+    });
+  });
+
   // This gest the people from the data file
   app.get('/people', async (req: Request, res: Response) => {
     const data = await readJsonFile<Data>(dataFilePath);
